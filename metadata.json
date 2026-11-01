@@ -1,0 +1,8 @@
+{
+  "name": "Vocal Studio",
+  "description": "A Text-to-Speech app with multiple AI voices, system voice tuning, and voice recording capabilities.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
