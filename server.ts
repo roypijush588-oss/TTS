@@ -350,8 +350,8 @@ app.post('/api/tts/stream', async (req: Request, res: Response) => {
   }
 });
 
-// WebSocket Live API Proxy setup
-const wss = new WebSocketServer({ server, path: '/api/live' });
+// WebSocket Live API Proxy setup (noServer prevents intercepting Vite HMR upgrades)
+const wss = new WebSocketServer({ noServer: true });
 wss.on('connection', (ws: WebSocket) => {
   console.log('Client connected to Live API WebSocket proxy');
 
@@ -372,13 +372,29 @@ wss.on('connection', (ws: WebSocket) => {
   });
 });
 
+server.on('upgrade', (request, socket, head) => {
+  const pathname = new URL(request.url || '/', `http://${request.headers.host || 'localhost'}`).pathname;
+  if (pathname === '/api/live') {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit('connection', ws, request);
+    });
+  }
+});
+
 // Vite middleware in dev or static serving in production
 const isProd = process.env.NODE_ENV === 'production';
 
 if (!isProd) {
   const { createServer: createViteServer } = await import('vite');
   const vite = await createViteServer({
-    server: { middlewareMode: true },
+    server: {
+      middlewareMode: true,
+      hmr: {
+        server,
+        path: '/__vite_hmr',
+      },
+      watch: process.env.DISABLE_HMR === 'true' ? { ignored: ['**/*'] } : undefined,
+    },
     appType: 'spa',
   });
   app.use(vite.middlewares);

@@ -241,7 +241,7 @@ export default function SystemVoices() {
               <List className="w-4 h-4 text-amber-400" />
               <h4 className="text-sm font-medium">Saved Presets</h4>
             </div>
-            <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+            <div className="space-y-2 lg:max-h-60 lg:overflow-y-auto lg:pr-1 custom-scrollbar">
               {presets.map((preset) => (
                 <div
                   key={preset.id}

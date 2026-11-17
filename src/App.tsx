@@ -56,7 +56,7 @@ export default function App() {
   const currentTabMeta = TAB_ITEMS.find((t) => t.id === activeTab) || TAB_ITEMS[0];
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-[#0B0D10] text-zinc-100 selection:bg-amber-500/30 selection:text-amber-100">
+    <div className="min-h-screen w-full overflow-x-clip bg-[#0B0D10] text-zinc-100 selection:bg-amber-500/30 selection:text-amber-100">
       {/* Top Studio Bar — 3-Zone Contract */}
       <header className="sticky top-0 z-30 safe-area-top border-b border-zinc-800/80 bg-[#0B0D10]/90 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-8">

@@ -12,9 +12,10 @@
     background-color: #0b0d10;
     color: #f4f4f5;
     font-family: var(--font-sans);
-    overflow-x: hidden;
-    overscroll-behavior-y: contain;
+    min-height: 100%;
+    overflow-x: clip;
     -webkit-tap-highlight-color: transparent;
+    -webkit-overflow-scrolling: touch;
   }
 
   body {

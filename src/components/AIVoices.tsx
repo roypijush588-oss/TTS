@@ -847,7 +847,7 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
             <span className="text-xs text-zinc-500 font-mono tabular-nums">{allVoices.length} available</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2 max-h-[380px] overflow-y-auto pr-1 custom-scrollbar">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2 lg:max-h-[380px] lg:overflow-y-auto lg:pr-1 custom-scrollbar">
             {allVoices.map((voice) => {
               const isSelected = selectedVoice === voice.id;
               return (
