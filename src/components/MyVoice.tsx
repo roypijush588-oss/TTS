@@ -1,9 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Square, Play, Trash2, AlertCircle, Download, Loader2, Radio, AudioWaveform } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Mic, Square, Play, Trash2, AlertCircle, Download, Loader2 } from 'lucide-react';
 
 export default function MyVoice() {
   const [isRecording, setIsRecording] = useState(false);
-  const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
   const [audioURL, setAudioURL] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -11,24 +10,6 @@ export default function MyVoice() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    if (isRecording) {
-      setRecordingSeconds(0);
-      timerRef.current = setInterval(() => {
-        setRecordingSeconds(prev => prev + 1);
-      }, 1000);
-    } else {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [isRecording]);
 
   const startRecording = async () => {
     try {
@@ -48,6 +29,8 @@ export default function MyVoice() {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         const url = URL.createObjectURL(audioBlob);
         setAudioURL(url);
+        
+        // Stop all tracks to release the microphone
         stream.getTracks().forEach(track => track.stop());
       };
 
@@ -55,7 +38,7 @@ export default function MyVoice() {
       setIsRecording(true);
     } catch (err: any) {
       console.error("Error accessing microphone:", err);
-      setError("Could not access the microphone. Please grant permission.");
+      setError("Could not access the microphone. Please ensure you have granted permission.");
     }
   };
 
@@ -79,6 +62,7 @@ export default function MyVoice() {
       const numOfChan = audioBuffer.numberOfChannels;
       let length = audioBuffer.length * numOfChan * 2 + 44;
       
+      // Pad with 0.5s of silence to prevent cutoffs
       const paddingSamples = Math.floor(audioBuffer.sampleRate * 0.5);
       length += paddingSamples * numOfChan * 2;
       
@@ -123,11 +107,12 @@ export default function MyVoice() {
       const a = document.createElement('a');
       a.href = url;
       a.target = '_blank';
-      a.download = `VocalStudio_Booth_Capture_${Date.now()}.wav`;
+      a.download = `my-voice-${Date.now()}.wav`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       
+      // Delay revoke significantly to ensure dialog completes
       setTimeout(() => URL.revokeObjectURL(url), 10000);
     } catch (err: any) {
       console.error("Failed to convert to WAV:", err);
@@ -144,84 +129,49 @@ export default function MyVoice() {
     }
   };
 
-  const formatTimer = (sec: number) => {
-    const mins = Math.floor(sec / 60);
-    const remainder = sec % 60;
-    return `${mins.toString().padStart(2, '0')}:${remainder.toString().padStart(2, '0')}.00`;
-  };
-
   return (
-    <div className="space-y-6">
-      {/* Header Ribbon */}
-      <div className="bg-[#0C111C] border border-[#182338] rounded-2xl p-4 flex items-center justify-between shadow-xl">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
-            <Mic className="w-4 h-4" />
-          </div>
-          <div>
-            <h2 className="text-base font-bold text-white tracking-tight">TRACK 04: STUDIO MIC BOOTH & VOCAL CAPTURE</h2>
-            <p className="text-xs text-slate-400">High-fidelity local microphone recording with instant broadcast WAV export</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 font-mono text-xs text-slate-400 bg-[#080B12] px-3 py-1.5 rounded-lg border border-[#182338]">
-          <Radio className="w-3.5 h-3.5 text-indigo-400" />
-          <span>DIRECT PCM BUS</span>
-        </div>
+    <div className="max-w-2xl mx-auto space-y-8 py-8">
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-semibold text-white">Record Your Natural Voice</h2>
+        <p className="text-neutral-400">
+          Create a recording of your own voice to use as a baseline or just to hear how you sound.
+        </p>
       </div>
 
       {error && (
-        <div className="flex items-center gap-2.5 text-xs text-rose-300 bg-rose-500/10 border border-rose-500/30 p-4 rounded-xl">
-          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+        <div className="flex items-center gap-2 text-red-400 bg-red-400/10 p-4 rounded-xl text-sm">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
           <p>{error}</p>
         </div>
       )}
 
-      <div className="bg-[#0C111C] border border-[#182338] rounded-2xl p-8 shadow-xl flex flex-col items-center justify-center">
+      <div className="flex flex-col items-center justify-center p-12 bg-neutral-900/50 border border-neutral-800 rounded-3xl">
         {!audioURL ? (
-          <div className="flex flex-col items-center gap-6 py-6 text-center">
-            {/* Live Recording HUD */}
-            <div className="flex flex-col items-center gap-2">
-              <span className="text-xs font-mono uppercase tracking-widest text-slate-400">
-                {isRecording ? 'LIVE RECORDING IN PROGRESS' : 'STANDBY • READY TO RECORD'}
-              </span>
-              <span className="font-mono text-3xl font-bold text-white tracking-wider">
-                {formatTimer(recordingSeconds)}
-              </span>
-            </div>
-
+          <div className="flex flex-col items-center gap-6">
             <button
               onClick={isRecording ? stopRecording : startRecording}
-              className={`relative flex items-center justify-center w-28 h-28 rounded-full transition-all duration-300 ${
+              className={`relative group flex items-center justify-center w-32 h-32 rounded-full transition-all duration-300 ${
                 isRecording 
-                  ? 'bg-rose-500/20 text-rose-400 border-2 border-rose-500/60 shadow-[0_0_24px_rgba(244,63,94,0.4)]' 
-                  : 'bg-indigo-500/20 text-indigo-400 border-2 border-indigo-500/40 hover:bg-indigo-500/30 hover:border-indigo-400'
+                  ? 'bg-red-500/20 text-red-500 hover:bg-red-500/30' 
+                  : 'bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30'
               }`}
             >
               {isRecording && (
-                <span className="absolute inset-0 rounded-full border-4 border-rose-500/40 animate-ping" />
+                <span className="absolute inset-0 rounded-full border-4 border-red-500/50 animate-ping" />
               )}
               {isRecording ? (
-                <Square className="w-10 h-10 fill-current" />
+                <Square className="w-12 h-12 fill-current" />
               ) : (
-                <Mic className="w-10 h-10" />
+                <Mic className="w-12 h-12" />
               )}
             </button>
-
-            <p className="text-xs font-mono text-slate-400 max-w-sm">
-              {isRecording ? 'Capturing audio... Tap button to complete recording session' : 'Click the microphone button to start recording your studio voice'}
+            <p className="text-lg font-medium text-neutral-300">
+              {isRecording ? 'Recording... Tap to stop' : 'Tap to start recording'}
             </p>
           </div>
         ) : (
-          <div className="w-full max-w-xl space-y-6 py-4">
-            <div className="flex items-center justify-between text-xs font-mono text-slate-300">
-              <span className="flex items-center gap-2">
-                <AudioWaveform className="w-4 h-4 text-emerald-400" />
-                TAKE 01 AUDIO BUFFER CAPTURED
-              </span>
-              <span className="text-emerald-400 font-bold">{recordingSeconds}s Duration</span>
-            </div>
-
-            <div className="bg-[#080B12] p-4 rounded-xl border border-[#182338]">
+          <div className="w-full space-y-6">
+            <div className="bg-neutral-950 p-6 rounded-2xl border border-neutral-800">
               <audio 
                 ref={audioRef}
                 src={audioURL} 
@@ -229,32 +179,31 @@ export default function MyVoice() {
                 className="w-full"
               />
             </div>
-
-            <div className="flex justify-center gap-3 flex-wrap">
+            <div className="flex justify-center gap-4 flex-wrap">
               <button
                 onClick={() => {
                   deleteRecording();
                   startRecording();
                 }}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#141C2B] hover:bg-[#1E2B42] text-slate-200 border border-[#222E45] font-mono text-xs font-semibold transition-colors"
+                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-neutral-800 text-neutral-300 hover:bg-neutral-700 transition-colors font-medium"
               >
-                <Mic className="w-4 h-4 text-indigo-400" />
-                RE-RECORD
+                <Mic className="w-5 h-5" />
+                Record Again
               </button>
               <button
                 onClick={isDownloading ? undefined : downloadAsWav}
                 disabled={isDownloading}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-400 hover:to-indigo-500 text-white font-mono text-xs font-bold shadow-lg shadow-indigo-600/30 transition-all disabled:opacity-50"
+                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/20 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                {isDownloading ? 'EXPORTING...' : 'EXPORT WAV'}
+                {isDownloading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
+                {isDownloading ? 'Converting...' : 'Download'}
               </button>
               <button
                 onClick={deleteRecording}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 font-mono text-xs font-semibold transition-colors"
+                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 transition-colors font-medium"
               >
-                <Trash2 className="w-4 h-4" />
-                DISCARD
+                <Trash2 className="w-5 h-5" />
+                Delete
               </button>
             </div>
           </div>

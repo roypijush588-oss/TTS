@@ -80,18 +80,15 @@ function buildDirectives({
 // AI Script Duration Optimizer Endpoint
 app.post('/api/script/fit-duration', async (req: Request, res: Response) => {
   try {
-    const inputScript = (req.body.text || req.body.script || '').trim();
-    const targetSeconds = req.body.targetSeconds || req.body.durationSeconds || 60;
-    const currentWords = req.body.currentWords || (inputScript ? inputScript.split(/\s+/).length : 0);
+    const { text, targetSeconds = 60, currentWords = 0 } = req.body;
 
-    if (!inputScript) {
-      return res.status(400).json({ error: 'Text or script is required.' });
+    if (!text || typeof text !== 'string' || !text.trim()) {
+      return res.status(400).json({ error: 'Text is required.' });
     }
 
     if (!process.env.GEMINI_API_KEY) {
       return res.status(200).json({
-        fittedScript: inputScript,
-        fittedWordCount: currentWords,
+        fittedScript: text,
         warning: 'Gemini API key is not configured. Your API key can be found in the Settings > Secrets panel.',
       });
     }
@@ -115,74 +112,56 @@ Task:
 - Output ONLY the updated script text. Do NOT include markdown formatting, code blocks, introductory text, explanations, or quotation marks.
 
 Original Script:
-${inputScript}`;
+${text.trim()}`;
 
-    // Resilient fallback across flash models in case of temporary 503 spikes
-    const candidateModels = ['gemini-3.8-flash', 'gemini-3.8-flash-lite', 'gemini-3.1-flash-lite-preview'];
-    let rawText = '';
-    let lastErr: any = null;
+    const response = await ai.models.generateContent({
+      model: 'gemini-3.8-flash',
+      contents: prompt,
+    });
 
-    for (const model of candidateModels) {
-      try {
-        const response = await ai.models.generateContent({
-          model,
-          contents: prompt,
-        });
-        rawText = response.text || '';
-        if (rawText.trim()) break;
-      } catch (err: any) {
-        lastErr = err;
-        console.warn(`Model ${model} fit-duration failed:`, err?.message || err);
-      }
-    }
-
-    if (!rawText.trim()) {
-      // If AI models experienced temporary demand spikes, return original script safely with notice
-      return res.json({
-        fittedScript: inputScript,
-        fittedWordCount: currentWords,
-        targetSeconds,
-        idealWordCount,
-        warning: 'AI auto-fit experienced temporary demand spike; script preserved at target duration.',
-      });
-    }
-
+    const rawText = response.text || '';
     const fittedScript = rawText.trim().replace(/^```[a-z]*\n?|```$/g, '').replace(/^["']|["']$/g, '').trim();
     const newWordCount = fittedScript.split(/\s+/).filter(Boolean).length;
 
     return res.json({
-      fittedScript: fittedScript || inputScript,
-      fittedWordCount: newWordCount || currentWords,
+      fittedScript: fittedScript || text,
+      newWordCount: newWordCount || currentWords,
       targetSeconds,
       idealWordCount,
     });
   } catch (error: any) {
     console.error('Fit duration error:', error);
-    return res.json({
-      fittedScript: req.body.text || req.body.script || '',
-      fittedWordCount: 0,
-      warning: 'Could not adjust script automatically. Script preserved.',
-    });
+    return res.status(500).json({ error: error?.message || 'Failed to optimize script for duration' });
   }
 });
 
-// Common handler for TTS synthesis
-async function handleTtsGeneration(req: Request, res: Response) {
+// Unary TTS Endpoint
+app.post('/api/tts', async (req: Request, res: Response) => {
   try {
-    const rawText = req.body.text || req.body.script;
-    const apiVoiceName = req.body.voice || req.body.apiVoiceName || 'Puck';
-    const tone = req.body.tone || 'natural';
-    const targetSeconds = req.body.durationSeconds || req.body.targetSeconds || 0;
-    const wordCount = req.body.wordCount || (rawText ? rawText.trim().split(/\s+/).length : 0);
-    const targetWpm = req.body.targetWpm || null;
-    const paceSpeed = req.body.paceSpeed || 'Natural';
-    const isCloned = Boolean(req.body.isCloned);
+    const {
+      text,
+      apiVoiceName = 'Puck',
+      tone = 'natural',
+      targetSeconds = 0,
+      wordCount = 0,
+      targetWpm = null,
+      paceSpeed = 'Natural',
+      isCloned = false,
+    } = req.body;
 
-    if (!rawText || typeof rawText !== 'string' || !rawText.trim()) {
+    if (!text || typeof text !== 'string' || !text.trim()) {
       return res.status(400).json({ error: 'Text is required.' });
     }
 
-    const cleanText = rawText.trim();
+    // If API key is missing or not provided yet, seamlessly signal client fallback
+    if (!process.env.GEMINI_API_KEY) {
+      return res.json({
+        fallbackWebSpeech: true,
+        warning: 'Gemini API key is not configured. Your API key can be found in the Settings > Secrets panel.',
+      });
+    }
+
+    const cleanText = text.trim();
     const directiveStyle = buildDirectives({
       tone,
       targetSeconds,
@@ -192,13 +171,7 @@ async function handleTtsGeneration(req: Request, res: Response) {
       isCloned,
     });
 
-    if (!process.env.GEMINI_API_KEY) {
-      return res.json({
-        fallbackWebSpeech: true,
-        warning: 'Gemini API key is not configured. Falling back to precision client speech engine.',
-      });
-    }
-
+    // Valid Gemini TTS models per @google/genai guidelines
     const modelsToTry = [
       'gemini-3.8-flash-tts',
       'gemini-3.8-flash-lite-tts',
@@ -236,34 +209,45 @@ async function handleTtsGeneration(req: Request, res: Response) {
         for (const part of parts) {
           if (part.inlineData?.data) {
             return res.json({
-              audioData: part.inlineData.data,
               audioBase64: part.inlineData.data,
               mimeType: part.inlineData.mimeType || 'audio/wav',
               model,
-              durationSeconds: targetSeconds || Math.round(cleanText.split(/\s+/).length / 2.3),
             });
           }
         }
       } catch (err: any) {
         lastError = err;
+        const msg = err?.message || '';
+        // If API key is invalid or rejected by Google endpoint, return fallback smoothly
+        if (/api_key_invalid|api key not valid|key not found/i.test(msg)) {
+          return res.json({
+            fallbackWebSpeech: true,
+            warning: 'API key is invalid. Your API key can be found in the Settings > Secrets panel.',
+          });
+        }
+        // If rate limit / quota exceeded on free tier, return smooth browser speech fallback
+        if (/quota|rate|limit|429|resource_exhausted/i.test(msg)) {
+          return res.json({
+            fallbackWebSpeech: true,
+            warning: 'Gemini TTS request limit reached. Using instant browser speech engine. Your API key can be found in the Settings > Secrets panel.',
+          });
+        }
       }
     }
 
+    // If Gemini models could not return audio, fall back gracefully
     return res.json({
       fallbackWebSpeech: true,
-      warning: lastError?.message || 'Using client speech engine.',
+      warning: lastError?.message || 'Gemini TTS audio unavailable. Using client speech engine.',
     });
   } catch (error: any) {
     console.error('TTS error:', error?.message || error);
     return res.json({
       fallbackWebSpeech: true,
-      warning: error?.message || 'Using client speech engine.',
+      warning: error?.message || 'TTS generation encountered an issue. Using client speech engine.',
     });
   }
-}
-
-app.post('/api/speech/generate', handleTtsGeneration);
-app.post('/api/tts', handleTtsGeneration);
+});
 
 // Streaming TTS Endpoint (Server-Sent Events)
 app.post('/api/tts/stream', async (req: Request, res: Response) => {

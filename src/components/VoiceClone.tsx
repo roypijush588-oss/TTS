@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Trash2, Loader2, AudioLines, CheckCircle2, Mic, Square, Upload, FileAudio, Sparkles, Activity } from 'lucide-react';
+import { Trash2, Loader2, AudioLines, CheckCircle2, Mic, Square, Upload, FileAudio } from 'lucide-react';
 
 export interface ClonedVoice {
   id: string;
@@ -32,7 +32,7 @@ export default function VoiceClone({ clonedVoices, setClonedVoices }: VoiceClone
     setIsDragging(true);
   };
 
-  const handleLeave = () => {
+  const handleDragLeave = () => {
     setIsDragging(false);
   };
 
@@ -78,6 +78,7 @@ export default function VoiceClone({ clonedVoices, setClonedVoices }: VoiceClone
       setHasRecorded(false);
     } catch (err) {
       console.error("Failed to start recording:", err);
+      alert("Microphone access is required to clone your voice.");
     }
   };
 
@@ -104,7 +105,7 @@ export default function VoiceClone({ clonedVoices, setClonedVoices }: VoiceClone
           if (prev >= 100) return 100;
           return prev + 5;
         });
-      }, 140);
+      }, 150);
     }
     return () => clearInterval(interval);
   }, [isTraining]);
@@ -122,7 +123,7 @@ export default function VoiceClone({ clonedVoices, setClonedVoices }: VoiceClone
       setHasRecorded(false);
       setFile(null);
       setVoiceName('');
-      setTimeout(() => setTrainingProgress(0), 400);
+      setTimeout(() => setTrainingProgress(0), 500);
     }
   }, [trainingProgress, isTraining, voiceName, setClonedVoices]);
 
@@ -131,168 +132,152 @@ export default function VoiceClone({ clonedVoices, setClonedVoices }: VoiceClone
   };
 
   const getTrainingStatusText = (progress: number) => {
-    if (progress < 20) return "Analyzing audio spectrum & formants...";
-    if (progress < 45) return "Extracting phonetic pitch contours...";
-    if (progress < 70) return "Synthesizing timbre neural weights...";
-    if (progress < 95) return "Calibrating model for DAW voice rack...";
-    return "Voice profile successfully compiled!";
+    if (progress < 20) return "Analyzing audio frequencies...";
+    if (progress < 40) return "Extracting vocal formants...";
+    if (progress < 60) return "Building phonetic dictionary...";
+    if (progress < 80) return "Training acoustic model...";
+    if (progress < 100) return "Finalizing voice clone...";
+    return "Voice ready!";
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header Ribbon */}
-      <div className="bg-[#0C111C] border border-[#182338] rounded-2xl p-4 flex items-center justify-between shadow-xl">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
-            <AudioLines className="w-4 h-4" />
-          </div>
-          <div>
-            <h2 className="text-base font-bold text-white tracking-tight">TRACK 02: NEURAL VOICE CLONING LAB</h2>
-            <p className="text-xs text-slate-400">Train custom timbre profiles from live microphone audio or studio samples</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 font-mono text-xs text-indigo-300 bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/20">
-          <Activity className="w-3.5 h-3.5" />
-          <span>{clonedVoices.length} CLONED PROFILES READY</span>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Section (Cols 1-7): Creation Rack */}
-        <div className="lg:col-span-7 bg-[#0C111C] border border-[#182338] rounded-2xl p-6 shadow-xl space-y-6">
-          <div className="border-b border-[#182338] pb-3">
-            <h3 className="text-sm font-mono font-bold text-slate-200 uppercase tracking-wider">
-              PROFILE CONFIGURATION & SAMPLE CAPTURE
-            </h3>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Provide a name and a clean audio sample using the reference calibration script.
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Record Section */}
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <h3 className="text-xl font-semibold text-white">Create Voice Clone</h3>
+            <p className="text-neutral-400 text-sm">
+              Read the provided script clearly, or upload an existing audio file of your voice to create your clone.
             </p>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div>
-              <label className="block text-xs font-mono text-slate-300 uppercase tracking-wider mb-2">
-                Voice Profile Name
+              <label className="block text-sm font-medium text-neutral-300 mb-2">
+                Voice Name
               </label>
               <input
                 type="text"
                 value={voiceName}
                 onChange={(e) => setVoiceName(e.target.value)}
-                placeholder="e.g. Studio Narrator, Host Hindi, Brand Persona..."
-                className="w-full bg-[#080B12] border border-[#182338] rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500/60 font-sans"
+                placeholder="e.g., My Custom Voice"
+                className="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-neutral-100 placeholder-neutral-500 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all"
                 disabled={isTraining}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-slate-300 uppercase tracking-wider mb-2">
-                Reference Calibration Script (Read aloud)
+              <label className="block text-sm font-medium text-neutral-300 mb-2">
+                Script to Read
               </label>
-              <div className="p-4 bg-[#080B12] border border-[#182338] rounded-xl text-slate-200 text-sm leading-relaxed font-sans">
-                "Hello dosto, I am now creating my custom <span className="text-indigo-400 font-semibold bg-indigo-500/10 px-1 rounded">voice clone</span> in VocalStudio. 
-                Ekdum badhiya <span className="text-indigo-400 font-semibold bg-indigo-500/10 px-1 rounded">audio quality</span> capture karne ke liye, 
-                I am speaking clearly and at a <span className="text-indigo-400 font-semibold bg-indigo-500/10 px-1 rounded">natural 1-minute pace</span>. 
-                Yeh sample help karega to generate realistic speech synthesis."
+              <div className="p-6 bg-neutral-900 border border-neutral-800 rounded-2xl text-neutral-300 text-lg leading-relaxed font-medium">
+                "Hello dosto, I am now creating my custom <mark className="bg-indigo-500/20 text-indigo-300 rounded px-1.5 cursor-help" title="Voice Cloning Trigger">voice clone</mark>. 
+                Ekdum badhiya <mark className="bg-indigo-500/20 text-indigo-300 rounded px-1.5 cursor-help" title="Frequency calibration">audio quality</mark> capture karne ke liye, 
+                I am speaking clearly and at a <mark className="bg-indigo-500/20 text-indigo-300 rounded px-1.5 cursor-help" title="Pacing calibration">natural pace</mark>. 
+                Yeh sample help karega to generate realistic <mark className="bg-indigo-500/20 text-indigo-300 rounded px-1.5 cursor-help" title="Timbre matching">speech synthesis</mark>."
               </div>
             </div>
 
-            {/* Mic Record Button */}
             <div className="flex gap-4">
               <button
                 onClick={isRecording ? stopRecording : startRecording}
                 disabled={isTraining}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-mono text-xs font-bold transition-all border ${
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-medium transition-all ${
                   isRecording 
-                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/50 shadow-lg shadow-rose-500/20 animate-pulse' 
+                    ? 'bg-red-500/10 text-red-500 border border-red-500/50 animate-pulse' 
                     : hasRecorded
-                      ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/25'
-                      : 'bg-[#121A2A] text-slate-200 border-[#202D47] hover:bg-[#1A253C]'
-                } disabled:opacity-50`}
+                      ? 'bg-green-500/10 text-green-400 border border-green-500/50 hover:bg-green-500/20'
+                      : 'bg-neutral-800 text-neutral-200 border border-neutral-700 hover:bg-neutral-700'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {isRecording ? (
                   <>
-                    <Square className="w-4 h-4 fill-current" />
-                    <span>STOP RECORDING SAMPLE</span>
+                    <Square className="w-5 h-5 fill-current" />
+                    Stop Recording
                   </>
                 ) : hasRecorded ? (
                   <>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <span>SAMPLE CAPTURED (CLICK TO RE-RECORD)</span>
+                    <CheckCircle2 className="w-5 h-5" />
+                    Recording Captured (Redo?)
                   </>
                 ) : (
                   <>
-                    <Mic className="w-4 h-4 text-indigo-400" />
-                    <span>RECORD VOCAL SAMPLE VIA MIC</span>
+                    <Mic className="w-5 h-5" />
+                    Start Recording
                   </>
                 )}
               </button>
             </div>
 
-            <div className="flex items-center gap-4 py-1">
-              <div className="h-[1px] bg-[#182338] flex-1" />
-              <span className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">OR IMPORT FILE</span>
-              <div className="h-[1px] bg-[#182338] flex-1" />
+            <div className="flex items-center gap-4 py-2">
+              <div className="h-px bg-neutral-800 flex-1"></div>
+              <span className="text-xs font-medium text-neutral-500 uppercase tracking-wider">OR</span>
+              <div className="h-px bg-neutral-800 flex-1"></div>
             </div>
 
-            {/* Dropzone */}
-            <div
-              onDragOver={handleDragOver}
-              onDragLeave={handleLeave}
-              onDrop={handleDrop}
-              onClick={() => !isTraining && fileInputRef.current?.click()}
-              className={`flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl transition-all cursor-pointer ${
-                isDragging 
-                  ? 'border-indigo-500 bg-indigo-500/10' 
-                  : file 
-                    ? 'border-emerald-500/40 bg-emerald-500/5'
-                    : 'border-[#1E2B45] hover:border-indigo-500/50 bg-[#080B12]/80 hover:bg-[#0E1524]'
-              } ${isTraining ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept="audio/*"
-                className="hidden"
-                disabled={isTraining}
-              />
-              
-              {file ? (
-                <div className="flex flex-col items-center gap-2 text-emerald-300">
-                  <FileAudio className="w-7 h-7 text-emerald-400" />
-                  <span className="font-mono text-xs text-center break-all px-4">{file.name}</span>
-                  <span className="text-[10px] font-mono text-slate-400">{(file.size / 1024 / 1024).toFixed(2)} MB Audio Sample</span>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-1.5 text-slate-400">
-                  <Upload className="w-5 h-5 text-indigo-400 mb-1" />
-                  <span className="font-mono text-xs font-semibold text-slate-300">Drop audio sample or click to browse</span>
-                  <span className="text-[10px] font-mono text-slate-500">Supports WAV, MP3, FLAC, M4A</span>
-                </div>
-              )}
+            <div className="space-y-4">
+              <label className="block text-sm font-medium text-neutral-300">
+                Upload Voice Record
+              </label>
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => !isTraining && fileInputRef.current?.click()}
+                className={`relative flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-2xl transition-all cursor-pointer ${
+                  isDragging 
+                    ? 'border-indigo-500 bg-indigo-500/10' 
+                    : file 
+                      ? 'border-green-500/50 bg-green-500/5'
+                      : 'border-neutral-700 hover:border-neutral-500 hover:bg-neutral-800/50'
+                } ${isTraining ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="audio/*"
+                  className="hidden"
+                  disabled={isTraining}
+                />
+                
+                {file ? (
+                  <div className="flex flex-col items-center gap-3 text-green-400">
+                    <FileAudio className="w-8 h-8" />
+                    <span className="font-medium text-center break-all px-4">{file.name}</span>
+                    <span className="text-xs opacity-70">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2 text-neutral-400">
+                    <Upload className="w-6 h-6 mb-1 opacity-60" />
+                    <span className="font-medium text-sm">Upload audio file</span>
+                    <span className="text-xs opacity-70">MP3, WAV, M4A</span>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Train Trigger */}
             <button
               onClick={handleTrain}
               disabled={(!hasRecorded && !file) || !voiceName.trim() || isTraining}
-              className="w-full flex items-center justify-center gap-2.5 py-3 px-6 rounded-xl font-mono text-xs font-bold bg-gradient-to-r from-indigo-500 via-indigo-600 to-indigo-700 hover:from-indigo-400 hover:to-indigo-600 text-white shadow-xl shadow-indigo-600/30 disabled:opacity-40 transition-all"
+              className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-medium bg-indigo-500 hover:bg-indigo-600 text-white shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {isTraining ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>{getTrainingStatusText(trainingProgress)} ({trainingProgress}%)</span>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  {getTrainingStatusText(trainingProgress)} ({trainingProgress}%)
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4 text-amber-300" />
-                  <span>TRAIN & COMPILE VOICE MODEL</span>
+                  <AudioLines className="w-5 h-5" />
+                  Train Custom Voice
                 </>
               )}
             </button>
             
             {isTraining && (
-              <div className="w-full bg-[#080B12] rounded-full h-2 overflow-hidden border border-[#182338]">
+              <div className="w-full bg-neutral-800 rounded-full h-2 overflow-hidden">
                 <div 
                   className="bg-indigo-500 h-full transition-all duration-150 ease-linear"
                   style={{ width: `${trainingProgress}%` }}
@@ -302,43 +287,38 @@ export default function VoiceClone({ clonedVoices, setClonedVoices }: VoiceClone
           </div>
         </div>
 
-        {/* Right Section (Cols 8-12): Cloned Voices Library */}
-        <div className="lg:col-span-5 bg-[#0C111C] border border-[#182338] rounded-2xl p-6 shadow-xl space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-[#182338]">
-            <div className="flex items-center gap-2">
-              <AudioLines className="w-4 h-4 text-indigo-400" />
-              <h3 className="font-mono font-bold text-xs uppercase tracking-wider text-slate-200">
-                ACTIVE CLONED LIBRARY ({clonedVoices.length})
-              </h3>
-            </div>
+        {/* List Section */}
+        <div className="space-y-6 bg-neutral-900/30 p-6 rounded-2xl border border-neutral-800/50">
+          <div className="flex items-center gap-2 text-indigo-400 mb-4">
+            <AudioLines className="w-5 h-5" />
+            <h3 className="font-medium text-lg text-white">Your Cloned Voices</h3>
           </div>
 
           {clonedVoices.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-slate-500 space-y-3 font-mono text-xs text-center">
-              <AudioLines className="w-10 h-10 opacity-30 text-indigo-400" />
-              <p>No custom voice models created yet.</p>
-              <p className="text-[11px] text-slate-600">Trained voices automatically appear in Track 01's Voice Rack.</p>
+            <div className="flex flex-col items-center justify-center py-12 text-neutral-500 space-y-3">
+              <AudioLines className="w-12 h-12 opacity-20" />
+              <p>No custom voices created yet.</p>
             </div>
           ) : (
-            <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+            <div className="space-y-3">
               {clonedVoices.map((voice) => (
                 <div 
                   key={voice.id}
-                  className="flex items-center justify-between p-3.5 bg-[#080B12] border border-[#182338] rounded-xl hover:border-slate-700 transition-colors"
+                  className="flex items-center justify-between p-4 bg-neutral-900 border border-neutral-800 rounded-xl"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
-                      <CheckCircle2 className="w-4 h-4" />
+                    <div className="p-2 bg-green-500/10 text-green-400 rounded-lg">
+                      <CheckCircle2 className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="font-semibold text-sm text-slate-100">{voice.name}</p>
-                      <p className="text-[10px] font-mono text-indigo-400">Biometric Profile • Active in Voice Rack</p>
+                      <p className="font-medium text-neutral-200">{voice.name}</p>
+                      <p className="text-xs text-neutral-500">Ready to use</p>
                     </div>
                   </div>
                   <button
                     onClick={() => deleteVoice(voice.id)}
-                    className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
-                    title="Remove voice profile"
+                    className="p-2 text-neutral-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                    title="Delete voice"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
