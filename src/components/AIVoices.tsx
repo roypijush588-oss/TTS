@@ -15,6 +15,7 @@ import {
   Check,
 } from 'lucide-react';
 import { ClonedVoice } from './VoiceClone';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 type VoiceConfig = {
   id: string;
@@ -157,6 +158,7 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
   const [customSeconds, setCustomSeconds] = useState<number>(60);
   const [isFittingScript, setIsFittingScript] = useState(false);
   const [fitNotice, setFitNotice] = useState<string | null>(null);
+  const isOnline = useOnlineStatus();
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
@@ -233,6 +235,10 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
 
   const handleFitScript = async () => {
     if (!text.trim() || effectiveDurationSeconds <= 0) return;
+    if (!isOnline || !navigator.onLine) {
+      setError('You are currently offline. AI script adaptation requires an internet connection.');
+      return;
+    }
     setIsFittingScript(true);
     setFitNotice(null);
     setError(null);
@@ -504,6 +510,15 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
 
   const handleGenerate = async () => {
     if (!text.trim()) return;
+
+    if (!isOnline || !navigator.onLine) {
+      stopAudio();
+      setEngineNotice(null);
+      setError(
+        'You are currently offline. Internet-dependent AI voice generation is unavailable until your connection is restored.'
+      );
+      return;
+    }
 
     setIsGenerating(true);
     setError(null);

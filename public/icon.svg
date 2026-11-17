@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#141821" />
+      <stop offset="100%" stop-color="#0B0D10" />
+    </linearGradient>
+    <linearGradient id="amberGrad" x1="128" y1="120" x2="384" y2="392" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FCD34D" />
+      <stop offset="50%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+  <rect x="16" y="16" width="480" height="480" rx="96" stroke="#27272A" stroke-width="4" />
+  <circle cx="256" cy="256" r="168" stroke="#F59E0B" stroke-opacity="0.16" stroke-width="6" />
+  <!-- 5-bar symmetric TTS waveform -->
+  <rect x="128" y="216" width="32" height="80" rx="16" fill="url(#amberGrad)" opacity="0.72" />
+  <rect x="184" y="164" width="32" height="184" rx="16" fill="url(#amberGrad)" opacity="0.88" />
+  <rect x="240" y="116" width="32" height="280" rx="16" fill="url(#amberGrad)" />
+  <rect x="296" y="164" width="32" height="184" rx="16" fill="url(#amberGrad)" opacity="0.88" />
+  <rect x="352" y="216" width="32" height="80" rx="16" fill="url(#amberGrad)" opacity="0.72" />
+</svg>

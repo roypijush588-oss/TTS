@@ -5,6 +5,8 @@ import AIVoices from './components/AIVoices';
 import SystemVoices from './components/SystemVoices';
 import MyVoice from './components/MyVoice';
 import VoiceClone, { ClonedVoice } from './components/VoiceClone';
+import { PWAInstallButton } from './components/PWAInstallButton';
+import { OfflineBanner } from './components/OfflineBanner';
 
 type StudioTab = 'ai' | 'clone' | 'system' | 'record';
 
@@ -56,7 +58,7 @@ export default function App() {
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-[#0B0D10] text-zinc-100 selection:bg-amber-500/30 selection:text-amber-100">
       {/* Top Studio Bar — 3-Zone Contract */}
-      <header className="sticky top-0 z-30 border-b border-zinc-800/80 bg-[#0B0D10]/90 backdrop-blur-md">
+      <header className="sticky top-0 z-30 safe-area-top border-b border-zinc-800/80 bg-[#0B0D10]/90 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-8">
           {/* Zone 1: Single-line Brand Wordmark */}
           <button
@@ -131,7 +133,7 @@ export default function App() {
         </nav>
 
         {/* Active Workspace Heading */}
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 pb-1">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pb-1">
           <div className="space-y-1">
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
               {currentTabMeta.label}
@@ -140,10 +142,15 @@ export default function App() {
               {currentTabMeta.subtitle}
             </p>
           </div>
-          <div className="text-xs text-zinc-500 font-mono tabular-nums whitespace-nowrap">
-            {clonedVoices.length} custom {clonedVoices.length === 1 ? 'voice' : 'voices'} saved
+          <div className="flex items-center gap-3 self-start sm:self-end">
+            <span className="text-xs text-zinc-500 font-mono tabular-nums whitespace-nowrap">
+              {clonedVoices.length} custom {clonedVoices.length === 1 ? 'voice' : 'voices'} saved
+            </span>
+            <PWAInstallButton />
           </div>
         </div>
+
+        <OfflineBanner />
 
         {/* Single-Elevation Studio Surface */}
         <main className="bg-[#12151B] border border-zinc-800/80 rounded-2xl p-4 sm:p-6 lg:p-8">
