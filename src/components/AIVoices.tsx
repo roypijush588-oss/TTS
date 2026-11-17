@@ -1,5 +1,19 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Play, Square, Loader2, Sparkles, AlertCircle, Download, Clock, Gauge, Zap, Wand2, CheckCircle2, ArrowRight } from 'lucide-react';
+import {
+  Play,
+  Square,
+  Loader2,
+  Sparkles,
+  AlertCircle,
+  Download,
+  Clock,
+  Gauge,
+  Zap,
+  Wand2,
+  CheckCircle2,
+  ArrowRight,
+  Check,
+} from 'lucide-react';
 import { ClonedVoice } from './VoiceClone';
 
 type VoiceConfig = {
@@ -26,7 +40,7 @@ const DURATION_PRESETS = [
   { label: '8s (Shorts)', value: 8 },
   { label: '15s (Reels)', value: 15 },
   { label: '30s', value: 30 },
-  { label: '60s (1 Min) ⭐', value: 60, isOneMinute: true },
+  { label: '60s (1 Min)', value: 60, isOneMinute: true },
   { label: '90s', value: 90 },
   { label: 'Custom', value: -1 },
 ];
@@ -39,7 +53,6 @@ interface ScriptSegment {
 
 // Parses script according to Hinglish punctuation breathing rules
 function parseScriptSegments(input: string): ScriptSegment[] {
-  // Normalize dashes
   const normalized = input.replace(/--|—/g, ' ,,,dash,,, ');
   const rawParts = normalized.match(/[^,.\?!]+([,.\?!]+|$)/g) || [input];
   const segments: ScriptSegment[] = [];
@@ -117,18 +130,20 @@ function createSyntheticWav(durationSeconds: number, sampleRate = 24000): string
 
 export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedVoice[] }) {
   const allVoices: VoiceConfig[] = [
-    ...clonedVoices.map(cv => ({
+    ...clonedVoices.map((cv) => ({
       id: cv.id,
       apiName: 'Puck',
       name: cv.name,
       description: 'Custom Cloned Voice',
       defaultTone: 'naturally',
-      isCloned: true
+      isCloned: true,
     })),
-    ...VOICES
+    ...VOICES,
   ];
 
-  const [text, setText] = useState('Demat locker hai, par trade ke liye Trading Account chahiye. Yehi wo platform hai. Yaha aap buy-sell ke orders place karte ho. Simple, right? Aur ye teen pillars hain -- aapka Bank, Trading aur Demat account.');
+  const [text, setText] = useState(
+    'Demat locker hai, par trade ke liye Trading Account chahiye. Yehi wo platform hai. Yaha aap buy-sell ke orders place karte ho. Simple, right? Aur ye teen pillars hain -- aapka Bank, Trading aur Demat account.'
+  );
   const [selectedVoice, setSelectedVoice] = useState(allVoices[0]?.id || VOICES[0].id);
   const [tone, setTone] = useState(allVoices[0]?.defaultTone ?? VOICES[0].defaultTone);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -137,7 +152,7 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
   const [engineNotice, setEngineNotice] = useState<string | null>(null);
   const [generatedAudio, setGeneratedAudio] = useState<string | null>(null);
   const [audioDuration, setAudioDuration] = useState<number | null>(null);
-  
+
   const [selectedPreset, setSelectedPreset] = useState<number>(60); // Default to 60s (1 Minute) time goal
   const [customSeconds, setCustomSeconds] = useState<number>(60);
   const [isFittingScript, setIsFittingScript] = useState(false);
@@ -167,7 +182,7 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
     if (!targetWpm) return null;
     if (targetWpm < 110) return { label: 'Relaxed & Slow pace', color: 'text-amber-400', speed: 'Slow', speedMultiplier: '0.8x' };
     if (targetWpm <= 165) return { label: 'Natural & Moderate pace', color: 'text-emerald-400', speed: 'Natural', speedMultiplier: '1.0x' };
-    if (targetWpm <= 215) return { label: 'Brisk & Fast pace', color: 'text-indigo-400', speed: 'Fast', speedMultiplier: '1.3x' };
+    if (targetWpm <= 215) return { label: 'Brisk & Fast pace', color: 'text-sky-400', speed: 'Fast', speedMultiplier: '1.3x' };
     return { label: 'Ultra-Fast pace (High Density)', color: 'text-rose-400', speed: 'Ultra-Fast', speedMultiplier: '1.6x' };
   }, [targetWpm]);
 
@@ -209,7 +224,6 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
       setSelectedPreset(-1);
       setCustomSeconds(detectedGoalMatch.seconds);
     }
-    // Cleanly strip the directive phrase from the script so the voice speaks only the content
     const cleaned = text.replace(detectedGoalMatch.rawPhrase, '').replace(/^[:\s,-]+/, '').trim();
     if (cleaned) {
       setText(cleaned);
@@ -239,11 +253,13 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
         setText(data.fittedScript);
         setGeneratedAudio(null);
         setAudioDuration(null);
-        setFitNotice(`AI adapted script to ${data.newWordCount} words for an exact ${effectiveDurationSeconds === 60 ? '1-minute' : `${effectiveDurationSeconds}s`} natural delivery!`);
+        setFitNotice(
+          `AI adapted script to ${data.newWordCount} words for an exact ${effectiveDurationSeconds === 60 ? '1-minute' : `${effectiveDurationSeconds}s`} natural delivery!`
+        );
       } else if (data.error) {
         setError(data.error);
       }
-    } catch (err: any) {
+    } catch (_err: any) {
       setError('Failed to adapt script. Please try again.');
     } finally {
       setIsFittingScript(false);
@@ -251,14 +267,14 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
   };
 
   useEffect(() => {
-    if (!allVoices.find(v => v.id === selectedVoice)) {
+    if (!allVoices.find((v) => v.id === selectedVoice)) {
       setSelectedVoice(allVoices[0]?.id || VOICES[0].id);
     }
   }, [clonedVoices, selectedVoice]);
 
   const handleVoiceChange = (voiceId: string) => {
     setSelectedVoice(voiceId);
-    const voice = allVoices.find(v => v.id === voiceId);
+    const voice = allVoices.find((v) => v.id === voiceId);
     if (voice && voice.defaultTone !== undefined) {
       setTone(voice.defaultTone);
     }
@@ -303,11 +319,11 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
     const voices = window.speechSynthesis.getVoices();
     const isFemale = /jenny|kore|zephyr/i.test(voiceConfig.name);
     const preferredVoice =
-      voices.find(v => /hi-IN|hin/i.test(v.lang)) ||
-      voices.find(v => /en-IN/i.test(v.lang)) ||
-      voices.find(v => isFemale && /female|zira|samantha|karen|google uk english female|natural/i.test(v.name)) ||
-      voices.find(v => !isFemale && /male|david|alex|george|google uk english male|natural/i.test(v.name)) ||
-      voices.find(v => v.lang.startsWith('en')) ||
+      voices.find((v) => /hi-IN|hin/i.test(v.lang)) ||
+      voices.find((v) => /en-IN/i.test(v.lang)) ||
+      voices.find((v) => isFemale && /female|zira|samantha|karen|google uk english female|natural/i.test(v.name)) ||
+      voices.find((v) => !isFemale && /male|david|alex|george|google uk english male|natural/i.test(v.name)) ||
+      voices.find((v) => v.lang.startsWith('en')) ||
       voices[0];
 
     let index = 0;
@@ -323,7 +339,7 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
       const utterance = new SpeechSynthesisUtterance(seg.text);
       if (preferredVoice) utterance.voice = preferredVoice;
       utterance.rate = speechRate;
-      utterance.pitch = seg.isQuestion ? 1.25 : (isFemale ? 1.05 : 0.95);
+      utterance.pitch = seg.isQuestion ? 1.25 : isFemale ? 1.05 : 0.95;
 
       utterance.onend = () => {
         index++;
@@ -346,7 +362,7 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
 
   const handleDownload = () => {
     if (!generatedAudio) return;
-    
+
     try {
       const binaryString = atob(generatedAudio);
       const len = binaryString.length;
@@ -355,7 +371,6 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
         bytes[i] = binaryString.charCodeAt(i);
       }
 
-      // Check if already a full WAV file with RIFF header
       const isWav =
         bytes.length >= 44 &&
         bytes[0] === 0x52 &&
@@ -368,7 +383,6 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
       if (isWav) {
         wavBlob = new Blob([bytes], { type: 'audio/wav' });
       } else {
-        // Add 0.5s of silence padding (24000 samples) to prevent end-of-file cutoffs
         const paddingBytes = 24000;
         const pcmData = new Uint8Array(len + paddingBytes);
         pcmData.set(bytes, 0);
@@ -386,13 +400,13 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
         view.setUint32(4, 36 + pcmData.length, true);
         writeString(8, 'WAVE');
         writeString(12, 'fmt ');
-        view.setUint32(16, 16, true); // Subchunk1Size
-        view.setUint16(20, 1, true); // AudioFormat (PCM)
-        view.setUint16(22, 1, true); // NumChannels
-        view.setUint32(24, 24000, true); // SampleRate
-        view.setUint32(28, 24000 * 2, true); // ByteRate
-        view.setUint16(32, 2, true); // BlockAlign
-        view.setUint16(34, 16, true); // BitsPerSample
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, 24000, true);
+        view.setUint32(28, 24000 * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
         writeString(36, 'data');
         view.setUint32(40, pcmData.length, true);
 
@@ -407,17 +421,17 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      
+
       setTimeout(() => URL.revokeObjectURL(url), 10000);
     } catch (err) {
-      console.error("Error downloading audio:", err);
-      setError("Failed to download the audio.");
+      console.error('Error downloading audio:', err);
+      setError('Failed to download the audio.');
     }
   };
 
   const playPCM = async (base64Data: string, _mimeType?: string) => {
     stopAudio();
-    
+
     try {
       const binaryString = atob(base64Data);
       const len = binaryString.length;
@@ -425,17 +439,16 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
       for (let i = 0; i < len; i++) {
         bytes[i] = binaryString.charCodeAt(i);
       }
-      
+
       if (!audioContextRef.current) {
         audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       }
       const audioCtx = audioContextRef.current;
-      
+
       if (audioCtx.state === 'suspended') {
         await audioCtx.resume();
       }
 
-      // Check if data is already a WAV file with RIFF header
       const isWav =
         bytes.length >= 44 &&
         bytes[0] === 0x52 &&
@@ -449,8 +462,7 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
         try {
           audioBuffer = await audioCtx.decodeAudioData(bytes.buffer.slice(0));
         } catch (wavErr) {
-          console.warn("Native WAV decode fallback:", wavErr);
-          // Fallback to stripping the 44-byte WAV header and treating as 24kHz PCM
+          console.warn('Native WAV decode fallback:', wavErr);
           const pcmSlice = bytes.buffer.slice(44);
           const buffer = new Int16Array(pcmSlice);
           const float32Data = new Float32Array(buffer.length);
@@ -461,7 +473,6 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
           audioBuffer.getChannelData(0).set(float32Data);
         }
       } else {
-        // Raw 16-bit PCM @ 24kHz
         const buffer = new Int16Array(bytes.buffer);
         const float32Data = new Float32Array(buffer.length);
         for (let i = 0; i < buffer.length; i++) {
@@ -476,31 +487,31 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
       const source = audioCtx.createBufferSource();
       source.buffer = audioBuffer;
       source.connect(audioCtx.destination);
-      
+
       source.onended = () => {
         setIsPlaying(false);
       };
-      
+
       sourceNodeRef.current = source;
       source.start();
       setIsPlaying(true);
     } catch (err) {
-      console.error("Error playing audio:", err);
-      setError("Failed to play the generated audio.");
+      console.error('Error playing audio:', err);
+      setError('Failed to play the generated audio.');
       setIsPlaying(false);
     }
   };
 
   const handleGenerate = async () => {
     if (!text.trim()) return;
-    
+
     setIsGenerating(true);
     setError(null);
     setAudioDuration(null);
     setGeneratedAudio(null);
     stopAudio();
 
-    const voiceConfig = allVoices.find(v => v.id === selectedVoice) || VOICES[0];
+    const voiceConfig = allVoices.find((v) => v.id === selectedVoice) || VOICES[0];
     const apiVoiceName = voiceConfig.apiName || 'Puck';
 
     try {
@@ -529,8 +540,9 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
         setGeneratedAudio(data.audioBase64);
         await playPCM(data.audioBase64, data.mimeType);
       } else if (data.fallbackWebSpeech || !response.ok) {
-        // Fallback to client Web Speech engine with full punctuation & timing rules
-        setEngineNotice(data.warning || "Using browser speech engine preview. Your API key can be found in the Settings > Secrets panel.");
+        setEngineNotice(
+          data.warning || 'Using browser speech engine preview. Your API key can be found in the Settings > Secrets panel.'
+        );
         const segments = parseScriptSegments(text);
         const estSec = effectiveDurationSeconds > 0 ? effectiveDurationSeconds : Math.max(2, Math.round(wordCount / 2.5));
         setAudioDuration(estSec);
@@ -538,11 +550,11 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
         setGeneratedAudio(wavBase64);
         speakWithWebSpeech(segments, voiceConfig, effectiveDurationSeconds, targetWpm);
       } else {
-        throw new Error("No audio data received from the server.");
+        throw new Error('No audio data received from the server.');
       }
     } catch (err: any) {
-      console.warn("TTS generation network fallback:", err);
-      setEngineNotice("Using browser speech engine preview. Your API key can be found in the Settings > Secrets panel.");
+      console.warn('TTS generation network fallback:', err);
+      setEngineNotice('Using browser speech engine preview. Your API key can be found in the Settings > Secrets panel.');
       const segments = parseScriptSegments(text);
       const estSec = effectiveDurationSeconds > 0 ? effectiveDurationSeconds : Math.max(2, Math.round(wordCount / 2.5));
       setAudioDuration(estSec);
@@ -555,19 +567,27 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
   };
 
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-5">
-          <div className="flex items-center justify-between">
-            <label className="block text-sm font-medium text-neutral-300">
-              Text to Speech
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      {/* Left Workspace: Script Editor & Time Calibration Console */}
+      <div className="lg:col-span-7 space-y-6">
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between gap-4">
+            <label htmlFor="tts-script-input" className="text-sm font-medium text-zinc-200">
+              Text to Speech Script
             </label>
-            <span className="text-xs text-neutral-400 font-mono">
-              {wordCount} {wordCount === 1 ? 'word' : 'words'}
-            </span>
+            <div className="flex items-center gap-2 text-xs text-zinc-400 font-mono tabular-nums">
+              <span>{wordCount} {wordCount === 1 ? 'word' : 'words'}</span>
+              {effectiveDurationSeconds > 0 && idealWordCount && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span>Target ~{idealWordCount}w</span>
+                </>
+              )}
+            </div>
           </div>
 
           <textarea
+            id="tts-script-input"
             value={text}
             onChange={(e) => {
               setText(e.target.value);
@@ -575,296 +595,291 @@ export default function AIVoices({ clonedVoices = [] }: { clonedVoices?: ClonedV
               setAudioDuration(null);
               setError(null);
             }}
-            className="w-full h-48 bg-neutral-900 border border-neutral-800 rounded-2xl p-4 text-neutral-100 placeholder-neutral-500 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none resize-none transition-all"
-            placeholder="Enter text here..."
+            className="w-full h-48 bg-[#0B0D10] border border-zinc-800 rounded-xl p-4 text-[15px] leading-relaxed text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 resize-none transition-colors"
+            placeholder="Enter your Hinglish or English script here..."
           />
+        </div>
 
-          {/* Detected Natural Language Time Goal Banner */}
-          {detectedGoalMatch && (
-            <div className="flex items-center justify-between p-3 bg-indigo-950/40 border border-indigo-500/30 rounded-xl text-xs">
-              <div className="flex items-center gap-2 text-indigo-200">
-                <Sparkles className="w-4 h-4 text-indigo-400 shrink-0" />
-                <span>
-                  Detected Time Goal in text: <strong className="text-white">"{detectedGoalMatch.rawPhrase}"</strong>
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={handleApplyDetectedGoal}
-                className="flex items-center gap-1.5 px-3 py-1 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-lg transition-colors shrink-0"
-              >
-                <span>Set to {detectedGoalMatch.label}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+        {/* Detected Natural Language Time Goal Banner */}
+        {detectedGoalMatch && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs">
+            <div className="flex items-center gap-2 text-amber-200">
+              <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>
+                Detected Time Goal in text: <strong className="text-white">"{detectedGoalMatch.rawPhrase}"</strong>
+              </span>
             </div>
-          )}
+            <button
+              type="button"
+              onClick={handleApplyDetectedGoal}
+              className="inline-flex items-center justify-center gap-1.5 min-h-[36px] px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0"
+            >
+              <span>Set to {detectedGoalMatch.label}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
-          {/* AI Fit Script Success Notice */}
-          {fitNotice && (
-            <div className="flex items-center gap-2 p-3 bg-emerald-950/40 border border-emerald-500/30 rounded-xl text-xs text-emerald-200">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>{fitNotice}</span>
-            </div>
-          )}
+        {/* AI Fit Script Success Notice */}
+        {fitNotice && (
+          <div className="flex items-center gap-2.5 p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs text-emerald-200">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>{fitNotice}</span>
+          </div>
+        )}
 
-          {/* Time Goal Setting */}
-          <div className="p-4 bg-neutral-900/90 border border-neutral-800/80 rounded-2xl space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <div className="flex items-center gap-2 text-neutral-200 font-medium text-sm">
-                <Clock className="w-4 h-4 text-indigo-400" />
-                <span>Time Goal (Target Duration)</span>
-                {effectiveDurationSeconds === 60 && (
-                  <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[11px] font-semibold uppercase tracking-wider">
-                    1-Minute Target Active
-                  </span>
-                )}
-              </div>
-              {effectiveDurationSeconds > 0 && paceDescription && (
-                <div className="flex items-center gap-2 text-xs">
-                  <Gauge className="w-3.5 h-3.5 text-neutral-400" />
-                  <span className="text-neutral-400">Speech Rate:</span>
-                  <span className={`font-semibold ${paceDescription.color}`}>
-                    {paceDescription.speedMultiplier} (~{targetWpm} WPM)
-                  </span>
-                  <span className="text-neutral-500">·</span>
-                  <span className={paceDescription.color}>{paceDescription.speed}</span>
-                </div>
+        {/* Time Goal Calibration Section (Separated cleanly with hairline border) */}
+        <div className="pt-5 border-t border-zinc-800/80 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm font-medium text-zinc-100">
+              <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>Time Goal (Target Duration)</span>
+              {effectiveDurationSeconds === 60 && (
+                <>
+                  <span className="text-zinc-600" aria-hidden="true">·</span>
+                  <span className="text-xs font-medium text-emerald-400">1-Minute Target Active</span>
+                </>
               )}
             </div>
 
-            <p className="text-xs text-neutral-400 leading-relaxed">
-              Select or set a target duration. The AI automatically calibrates speaking speed, cadence, and pause breathing cues to finish in your exact target timeframe.
-            </p>
-
-            <div className="flex flex-wrap gap-2">
-              {DURATION_PRESETS.map((preset) => {
-                const isSelected = selectedPreset === preset.value;
-                const isOneMin = (preset as any).isOneMinute;
-                return (
-                  <button
-                    key={preset.label}
-                    type="button"
-                    onClick={() => setSelectedPreset(preset.value)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                      isSelected
-                        ? isOneMin
-                          ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/25 ring-1 ring-emerald-400'
-                          : 'bg-indigo-500 text-white shadow-md shadow-indigo-500/25'
-                        : isOneMin
-                        ? 'bg-neutral-800 text-emerald-300 hover:bg-neutral-700 border border-emerald-500/30'
-                        : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700 hover:text-white border border-neutral-700/60'
-                    }`}
-                  >
-                    {preset.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* AI Script Word-Count Auto-Fitter for Time Goal */}
-            {effectiveDurationSeconds > 0 && (
-              <div className="pt-2 border-t border-neutral-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
-                <div className="text-neutral-400">
-                  <span>Ideal for {effectiveDurationSeconds === 60 ? '1 Min' : `${effectiveDurationSeconds}s`}: </span>
-                  <strong className="text-neutral-200">~{idealWordCount} words</strong>
-                  <span className="text-neutral-500"> (Script has </span>
-                  <strong className={wordCount > (idealWordCount || 0) * 1.3 ? 'text-amber-400' : 'text-neutral-200'}>
-                    {wordCount} words
-                  </strong>
-                  <span className="text-neutral-500">)</span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleFitScript}
-                  disabled={isFittingScript || !text.trim()}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-lg font-medium transition-colors disabled:opacity-50 shrink-0"
-                  title="AI will adjust and rewrite script to hit the exact duration naturally"
-                >
-                  {isFittingScript ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" />
-                      <span>Adapting Script to {effectiveDurationSeconds}s...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="w-3.5 h-3.5 text-indigo-400" />
-                      <span>AI Fit Script to {effectiveDurationSeconds === 60 ? '1 Min' : `${effectiveDurationSeconds}s`}</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
-
-            {selectedPreset === -1 && (
-              <div className="flex items-center gap-3 pt-2">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min="2"
-                    max="600"
-                    value={customSeconds}
-                    onChange={(e) => setCustomSeconds(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="w-24 bg-neutral-950 border border-neutral-700 rounded-lg px-3 py-1.5 text-sm text-neutral-100 focus:border-indigo-500 outline-none"
-                  />
-                  <span className="text-xs text-neutral-400">seconds</span>
-                </div>
-                <div className="flex gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setCustomSeconds(45)}
-                    className="px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs"
-                  >
-                    45s
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCustomSeconds(60)}
-                    className="px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs"
-                  >
-                    1 min
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCustomSeconds(90)}
-                    className="px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs"
-                  >
-                    1.5 min
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCustomSeconds(120)}
-                    className="px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs"
-                  >
-                    2 min
-                  </button>
-                </div>
+            {effectiveDurationSeconds > 0 && paceDescription && (
+              <div className="flex items-center gap-2 text-xs font-mono tabular-nums">
+                <Gauge className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                <span className={`font-semibold ${paceDescription.color}`}>
+                  {paceDescription.speedMultiplier} (~{targetWpm} WPM)
+                </span>
+                <span className="text-zinc-600" aria-hidden="true">·</span>
+                <span className={paceDescription.color}>{paceDescription.speed}</span>
               </div>
             )}
           </div>
-          
-          {error && (
-            <div className="flex items-center gap-2 text-red-400 bg-red-400/10 p-3 rounded-xl text-sm">
-              <AlertCircle className="w-4 h-4" />
-              {error}
-            </div>
-          )}
 
-          {engineNotice && (
-            <div className="flex items-center gap-2 text-amber-300 bg-amber-400/10 border border-amber-500/20 p-3 rounded-xl text-xs">
-              <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>{engineNotice}</span>
-            </div>
-          )}
+          <p className="text-xs text-zinc-400 leading-relaxed">
+            Set a target duration. The AI calibrates speaking speed, cadence, and punctuation breathing cues to fit your script into the selected time goal.
+          </p>
 
-          {audioDuration !== null && (
-            <div className="flex items-center justify-between p-3 bg-neutral-900 border border-neutral-800 rounded-xl text-xs">
-              <div className="flex items-center gap-2 text-neutral-300">
-                <Zap className="w-4 h-4 text-emerald-400" />
-                <span>Generated Duration:</span>
-                <span className="font-semibold text-emerald-300">{audioDuration.toFixed(1)}s</span>
+          <div className="flex flex-wrap gap-2">
+            {DURATION_PRESETS.map((preset) => {
+              const isSelected = selectedPreset === preset.value;
+              const isOneMin = (preset as any).isOneMinute;
+              return (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => setSelectedPreset(preset.value)}
+                  className={`min-h-[38px] px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap shrink-0 border ${
+                    isSelected
+                      ? isOneMin
+                        ? 'bg-emerald-500 text-zinc-950 border-emerald-400 font-semibold'
+                        : 'bg-amber-500 text-zinc-950 border-amber-400 font-semibold'
+                      : isOneMin
+                        ? 'bg-[#181C24] text-emerald-300 border-emerald-500/30 hover:border-emerald-400/60'
+                        : 'bg-[#181C24] text-zinc-300 border-zinc-800 hover:border-zinc-700 hover:text-white'
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {selectedPreset === -1 && (
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="2"
+                  max="600"
+                  value={customSeconds}
+                  onChange={(e) => setCustomSeconds(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                  className="w-24 bg-[#0B0D10] border border-zinc-700 rounded-lg px-3 py-2 text-sm font-mono tabular-nums text-zinc-100 focus:border-amber-500 focus:outline-none"
+                />
+                <span className="text-xs text-zinc-400">seconds</span>
               </div>
-              {effectiveDurationSeconds > 0 && (
-                <span className="text-neutral-400">
-                  Target: <span className="text-indigo-300 font-medium">{effectiveDurationSeconds}s</span>
-                </span>
-              )}
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { label: '45s', sec: 45 },
+                  { label: '1 min', sec: 60 },
+                  { label: '1.5 min', sec: 90 },
+                  { label: '2 min', sec: 120 },
+                ].map((opt) => (
+                  <button
+                    key={opt.label}
+                    type="button"
+                    onClick={() => setCustomSeconds(opt.sec)}
+                    className="px-2.5 py-1.5 rounded-lg bg-[#181C24] hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs font-mono tabular-nums whitespace-nowrap shrink-0"
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
-          <div className="flex items-center gap-4 pt-1">
-            <button
-              onClick={isPlaying ? stopAudio : handleGenerate}
-              disabled={isGenerating || !text.trim()}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-medium transition-all ${
-                isPlaying 
-                  ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20'
-                  : 'bg-indigo-500 hover:bg-indigo-600 text-white shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed'
-              }`}
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Generating {effectiveDurationSeconds > 0 ? `(${effectiveDurationSeconds === 60 ? '1-Min' : `${effectiveDurationSeconds}s`} goal)...` : '...'}
-                </>
-              ) : isPlaying ? (
-                <>
-                  <Square className="w-5 h-5 fill-current" />
-                  Stop
-                </>
-              ) : (
-                <>
-                  <Play className="w-5 h-5 fill-current" />
-                  Generate & Play {effectiveDurationSeconds > 0 ? `(${effectiveDurationSeconds === 60 ? '1 Min' : `${effectiveDurationSeconds}s`} Goal)` : ''}
-                </>
-              )}
-            </button>
+          {effectiveDurationSeconds > 0 && (
+            <div className="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
+              <div className="text-zinc-400 font-mono tabular-nums">
+                Ideal for {effectiveDurationSeconds === 60 ? '1 Min' : `${effectiveDurationSeconds}s`}:{' '}
+                <strong className="text-zinc-200">~{idealWordCount} words</strong>
+                <span className="text-zinc-600"> · </span>
+                <span>Current: </span>
+                <strong className={wordCount > (idealWordCount || 0) * 1.3 ? 'text-amber-400' : 'text-zinc-200'}>
+                  {wordCount} words
+                </strong>
+              </div>
 
-            {generatedAudio && (
               <button
-                onClick={handleDownload}
-                className="flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-medium bg-neutral-800 text-neutral-300 hover:bg-neutral-700 transition-colors border border-neutral-700"
-                title="Download as WAV"
+                type="button"
+                onClick={handleFitScript}
+                disabled={isFittingScript || !text.trim()}
+                className="inline-flex items-center justify-center gap-2 min-h-[38px] px-3.5 py-1.5 bg-[#181C24] hover:bg-zinc-800 text-amber-300 border border-amber-500/30 rounded-lg font-medium transition-colors disabled:opacity-50 whitespace-nowrap shrink-0"
+                title="AI will adjust and rewrite script to hit the exact duration naturally"
               >
-                <Download className="w-5 h-5" />
-                Download
+                {isFittingScript ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                    <span>Adapting Script to {effectiveDurationSeconds}s...</span>
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="w-3.5 h-3.5 text-amber-400" />
+                    <span>AI Fit Script to {effectiveDurationSeconds === 60 ? '1 Min' : `${effectiveDurationSeconds}s`}</span>
+                  </>
+                )}
               </button>
+            </div>
+          )}
+        </div>
+
+        {error && (
+          <div className="flex items-center gap-2.5 text-red-300 bg-red-500/10 border border-red-500/30 p-3.5 rounded-xl text-sm">
+            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {engineNotice && (
+          <div className="flex items-center gap-2.5 text-amber-200 bg-amber-500/10 border border-amber-500/30 p-3.5 rounded-xl text-xs">
+            <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>{engineNotice}</span>
+          </div>
+        )}
+
+        {audioDuration !== null && (
+          <div className="flex items-center justify-between px-4 py-3 bg-[#0B0D10] border border-zinc-800 rounded-xl text-xs font-mono tabular-nums">
+            <div className="flex items-center gap-2 text-zinc-300">
+              <Zap className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>Generated Duration:</span>
+              <span className="font-semibold text-emerald-400">{audioDuration.toFixed(1)}s</span>
+            </div>
+            {effectiveDurationSeconds > 0 && (
+              <span className="text-zinc-400">
+                Target: <span className="text-amber-300 font-semibold">{effectiveDurationSeconds}s</span>
+              </span>
             )}
+          </div>
+        )}
+
+        {/* Primary Transport Bar */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
+          <button
+            type="button"
+            onClick={isPlaying ? stopAudio : handleGenerate}
+            disabled={isGenerating || !text.trim()}
+            className={`flex-1 flex items-center justify-center gap-2 min-h-[46px] py-3 px-6 rounded-xl font-semibold text-sm transition-colors whitespace-nowrap shrink-0 ${
+              isPlaying
+                ? 'bg-red-500/15 text-red-300 hover:bg-red-500/25 border border-red-500/40'
+                : 'bg-amber-500 hover:bg-amber-400 text-zinc-950 disabled:opacity-50 disabled:cursor-not-allowed'
+            }`}
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Generating {effectiveDurationSeconds > 0 ? `(${effectiveDurationSeconds === 60 ? '1-Min' : `${effectiveDurationSeconds}s`} goal)...` : '...'}</span>
+              </>
+            ) : isPlaying ? (
+              <>
+                <Square className="w-4 h-4 fill-current" />
+                <span>Stop Playback</span>
+              </>
+            ) : (
+              <>
+                <Play className="w-4 h-4 fill-current" />
+                <span>Generate &amp; Play {effectiveDurationSeconds > 0 ? `(${effectiveDurationSeconds === 60 ? '1 Min' : `${effectiveDurationSeconds}s`} Goal)` : ''}</span>
+              </>
+            )}
+          </button>
+
+          {generatedAudio && (
+            <button
+              type="button"
+              onClick={handleDownload}
+              className="flex items-center justify-center gap-2 min-h-[46px] py-3 px-5 rounded-xl font-medium text-sm bg-[#181C24] text-zinc-200 hover:bg-zinc-800 border border-zinc-700 transition-colors whitespace-nowrap shrink-0"
+              title="Download as WAV"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download WAV</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Right Console: Voice Rack & Delivery Style */}
+      <div className="lg:col-span-5 lg:border-l lg:border-zinc-800/80 lg:pl-8 space-y-6">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-zinc-200">Select Voice</label>
+            <span className="text-xs text-zinc-500 font-mono tabular-nums">{allVoices.length} available</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2 max-h-[380px] overflow-y-auto pr-1 custom-scrollbar">
+            {allVoices.map((voice) => {
+              const isSelected = selectedVoice === voice.id;
+              return (
+                <button
+                  key={voice.id}
+                  type="button"
+                  onClick={() => handleVoiceChange(voice.id)}
+                  className={`w-full flex items-center justify-between p-3.5 rounded-xl border text-left transition-colors ${
+                    isSelected
+                      ? 'bg-amber-500/10 border-amber-500/50 text-white'
+                      : 'bg-[#0B0D10] border-zinc-800/90 text-zinc-300 hover:border-zinc-700 hover:bg-[#181C24]'
+                  }`}
+                >
+                  <div className="min-w-0 pr-3">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm truncate">{voice.name}</span>
+                      {voice.isCloned && (
+                        <>
+                          <span className="text-zinc-600" aria-hidden="true">·</span>
+                          <span className="text-[11px] font-medium text-amber-400">Custom Clone</span>
+                        </>
+                      )}
+                    </div>
+                    <p className="text-xs text-zinc-400 truncate mt-0.5">{voice.description}</p>
+                  </div>
+                  {isSelected && <Check className="w-4 h-4 text-amber-400 shrink-0" />}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="space-y-4">
-            <label className="block text-sm font-medium text-neutral-300">
-              Select Voice
-            </label>
-            <div className="space-y-2">
-              {allVoices.map((voice) => (
-                <button
-                  key={voice.id}
-                  onClick={() => handleVoiceChange(voice.id)}
-                  className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${
-                    selectedVoice === voice.id
-                      ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-300'
-                      : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:bg-neutral-800/50 hover:border-neutral-700'
-                  }`}
-                >
-                  <div className="flex flex-col items-start">
-                    <div className="flex items-center gap-2">
-                      <span className={`font-medium ${selectedVoice === voice.id ? 'text-indigo-200' : 'text-neutral-200'}`}>
-                        {voice.name}
-                      </span>
-                      {voice.isCloned && (
-                        <span className="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-400 text-[10px] font-medium uppercase tracking-wider">
-                          Clone
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-xs opacity-70">{voice.description}</span>
-                  </div>
-                  {selectedVoice === voice.id && (
-                    <Sparkles className="w-4 h-4 text-indigo-400" />
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-neutral-300">
-              Delivery Style (Optional)
-            </label>
-            <input
-              type="text"
-              value={tone}
-              onChange={(e) => setTone(e.target.value)}
-              placeholder="e.g., cheerfully, whispering, energetic..."
-              className="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-neutral-100 placeholder-neutral-500 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all"
-            />
-            <p className="text-xs text-neutral-500">
-              Instructs the AI how to deliver the text.
-            </p>
-          </div>
+        <div className="pt-5 border-t border-zinc-800/80 space-y-2.5">
+          <label htmlFor="delivery-style-input" className="block text-sm font-medium text-zinc-200">
+            Delivery Style (Optional)
+          </label>
+          <input
+            id="delivery-style-input"
+            type="text"
+            value={tone}
+            onChange={(e) => setTone(e.target.value)}
+            placeholder="e.g., cheerfully, whispering, energetic..."
+            className="w-full bg-[#0B0D10] border border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 transition-colors"
+          />
+          <p className="text-xs text-zinc-500">
+            Instructs the AI how to deliver the text without altering your spoken words.
+          </p>
         </div>
       </div>
     </div>
